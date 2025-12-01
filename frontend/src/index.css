@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --bg-primary: #0a0b0e;
+    --bg-secondary: #151823;
+    --bg-tertiary: #1a1f2e;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --accent-blue: #0ea5e9;
+    --accent-green: #10b981;
+    --accent-red: #ef4444;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #2d3748;
+}
+
+/* Glass morphism effect */
+.glass {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient text */
+.gradient-text {
+    background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 50%, #10b981 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Glow effects */
+.glow-blue {
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+}
+
+.glow-green {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.glow-red {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+/* Card hover effect */
+.card-hover {
+    transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Button styles */
+.btn-primary {
+    @apply px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-primary-600/25;
+}
+
+.btn-secondary {
+    @apply px-6 py-3 bg-dark-100 hover:bg-dark-200 text-white font-semibold rounded-xl border border-gray-700 transition-all duration-200;
+}
+
+.btn-success {
+    @apply px-6 py-3 bg-accent-green hover:bg-emerald-600 text-white font-semibold rounded-xl transition-all duration-200;
+}
+
+.btn-danger {
+    @apply px-6 py-3 bg-accent-red hover:bg-red-600 text-white font-semibold rounded-xl transition-all duration-200;
+}
+
+/* Input styles */
+.input-primary {
+    @apply w-full px-4 py-3 bg-dark-300 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200;
+}
+
+/* Card styles */
+.card {
+    @apply bg-dark-200 rounded-2xl border border-gray-800 p-6;
+}
+
+/* Stat card styles */
+.stat-card {
+    @apply bg-gradient-to-br from-dark-200 to-dark-300 rounded-2xl border border-gray-800 p-6 hover:border-gray-700 transition-all duration-300;
+}
+
+/* Table styles */
+.table-header {
+    @apply text-left text-sm font-medium text-gray-400 uppercase tracking-wider;
+}
+
+.table-cell {
+    @apply py-4 text-sm text-gray-300;
+}
+
+/* Animation keyframes */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Loading skeleton */
+.skeleton {
+    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
