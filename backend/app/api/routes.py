@@ -11,6 +11,7 @@ from app.services.interest_rate_service import InterestRateService
 from app.services.market_data_service import MarketDataService
 from app.services.prediction_service import PredictionService
 from app.ml.lstm_model import LSTMPricePredictor
+import os
 
 router = APIRouter()
 
@@ -38,13 +39,22 @@ class InterestRateResponse(BaseModel):
     next_update: str
 
 class MarketDataResponse(BaseModel):
-    cryptocurrency: str
+    asset: str
+    ticker: Optional[str] = None
+    name: Optional[str] = None
     current_price: float
+    previous_close: Optional[float] = None
     price_change_24h: float
-    price_change_7d: float
-    market_cap: float
-    volume_24h: float
+    price_change_7d: Optional[float] = None
+    market_cap: Optional[float] = None
+    volume_24h: Optional[float] = None
+    high_24h: Optional[float] = None
+    low_24h: Optional[float] = None
+    open_price: Optional[float] = None
+    currency: Optional[str] = "USD"
+    exchange: Optional[str] = None
     last_updated: str
+    source: Optional[str] = None
 
 class LendingPoolStats(BaseModel):
     total_supplied: float
@@ -112,6 +122,57 @@ async def train_model(crypto: str = "ethereum"):
         return {"status": "success", "message": f"Model trained for {crypto}", "metrics": result}
     except Exception as e:
         logger.error(f"Error training model: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/predictions/{crypto}/volatility")
+async def get_volatility_prediction(crypto: str = "ethereum"):
+    """Get ML-based volatility prediction for interest rate calculation"""
+    try:
+        volatility = await prediction_service.get_volatility_prediction(crypto)
+        return volatility
+    except Exception as e:
+        logger.error(f"Error getting volatility prediction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/model/status")
+async def get_model_status():
+    """Get status of trained ML models"""
+    try:
+        model_dir = "app/ml/models"
+        models = {}
+        
+        for crypto_id in ["ethereum", "bitcoin"]:
+            model_path = os.path.join(model_dir, f"{crypto_id}_lstm_model.keras")
+            scaler_path = os.path.join(model_dir, f"{crypto_id}_scaler.pkl")
+            feature_scaler_path = os.path.join(model_dir, f"{crypto_id}_feature_scaler.pkl")
+            
+            models[crypto_id] = {
+                "model_exists": os.path.exists(model_path),
+                "scaler_exists": os.path.exists(scaler_path),
+                "feature_scaler_exists": os.path.exists(feature_scaler_path),
+                "ready": all([
+                    os.path.exists(model_path),
+                    os.path.exists(scaler_path),
+                    os.path.exists(feature_scaler_path)
+                ])
+            }
+            
+            if os.path.exists(model_path):
+                import datetime
+                models[crypto_id]["last_modified"] = datetime.datetime.fromtimestamp(
+                    os.path.getmtime(model_path)
+                ).isoformat()
+        
+        return {
+            "models": models,
+            "model_directory": model_dir,
+            "prediction_horizon": 7,
+            "lookback_period": 60
+        }
+    except Exception as e:
+        logger.error(f"Error getting model status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

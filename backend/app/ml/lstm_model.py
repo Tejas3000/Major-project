@@ -20,6 +20,7 @@ import os
 from loguru import logger
 from datetime import datetime, timedelta
 import joblib
+import yfinance as yf
 
 
 class LSTMPricePredictor:
@@ -59,9 +60,8 @@ class LSTMPricePredictor:
         Build the LSTM model architecture.
         
         Architecture:
-        - Bidirectional LSTM layers for capturing patterns in both directions
+        - LSTM layers for capturing temporal patterns
         - Dropout layers for regularization
-        - Batch normalization for stable training
         - Dense output layer for predictions
         
         Args:
@@ -71,28 +71,17 @@ class LSTMPricePredictor:
             Compiled Keras Sequential model
         """
         model = Sequential([
-            # First Bidirectional LSTM layer
-            Bidirectional(
-                LSTM(128, return_sequences=True, input_shape=input_shape),
-                input_shape=input_shape
-            ),
-            BatchNormalization(),
-            Dropout(0.3),
+            # First LSTM layer
+            LSTM(64, return_sequences=True, input_shape=input_shape),
+            Dropout(0.2),
             
             # Second LSTM layer
-            LSTM(64, return_sequences=True),
-            BatchNormalization(),
-            Dropout(0.3),
-            
-            # Third LSTM layer
             LSTM(32, return_sequences=False),
-            BatchNormalization(),
             Dropout(0.2),
             
             # Dense layers
-            Dense(64, activation='relu'),
-            Dropout(0.2),
             Dense(32, activation='relu'),
+            Dense(16, activation='relu'),
             
             # Output layer - predict next N days
             Dense(self.prediction_horizon)
@@ -483,3 +472,127 @@ class LSTMPricePredictor:
 
 # Singleton instance
 predictor = LSTMPricePredictor()
+
+
+def fetch_crypto_data(
+    symbol: str = "ETH-USD",
+    period: str = "2y",
+    interval: str = "1d"
+) -> pd.DataFrame:
+    """
+    Fetch cryptocurrency price data from Yahoo Finance.
+    
+    Args:
+        symbol: Ticker symbol (e.g., "ETH-USD", "BTC-USD")
+        period: Data period (e.g., "1y", "2y", "5y", "max")
+        interval: Data interval (e.g., "1d", "1h")
+        
+    Returns:
+        DataFrame with OHLCV data
+    """
+    logger.info(f"Fetching {symbol} data from yfinance (period={period}, interval={interval})")
+    
+    ticker = yf.Ticker(symbol)
+    df = ticker.history(period=period, interval=interval)
+    
+    if df.empty:
+        raise ValueError(f"No data fetched for {symbol}")
+    
+    # Standardize column names
+    df.columns = [col.lower() for col in df.columns]
+    
+    # Add 'price' column (same as 'close')
+    df['price'] = df['close']
+    
+    logger.info(f"Fetched {len(df)} records from {df.index[0]} to {df.index[-1]}")
+    
+    return df
+
+
+def train_model_with_yfinance(
+    symbol: str = "ETH-USD",
+    crypto_id: str = "ethereum",
+    period: str = "2y",
+    epochs: int = 100,
+    batch_size: int = 32
+) -> Dict:
+    """
+    Train the LSTM model using data fetched from Yahoo Finance.
+    
+    Args:
+        symbol: Ticker symbol (e.g., "ETH-USD", "BTC-USD")
+        crypto_id: Identifier for saving the model
+        period: Historical data period
+        epochs: Number of training epochs
+        batch_size: Training batch size
+        
+    Returns:
+        Dictionary with training metrics
+    """
+    # Fetch data
+    df = fetch_crypto_data(symbol=symbol, period=period)
+    
+    # Initialize predictor
+    model_predictor = LSTMPricePredictor()
+    
+    # Train model
+    metrics = model_predictor.train(
+        df=df,
+        epochs=epochs,
+        batch_size=batch_size,
+        crypto_id=crypto_id
+    )
+    
+    return metrics
+
+
+if __name__ == "__main__":
+    import os
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TF warnings
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU
+    os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # Disable oneDNN
+    
+    # Force CPU usage
+    import tensorflow as tf
+    tf.config.set_visible_devices([], 'GPU')
+    
+    # Train model for Ethereum
+    print("=" * 60)
+    print("LSTM Cryptocurrency Price Prediction Model Training")
+    print("=" * 60)
+    
+    # Train on Ethereum (ETH-USD) with smaller period for faster training
+    print("\n[1/2] Training model for Ethereum (ETH-USD)...")
+    eth_metrics = train_model_with_yfinance(
+        symbol="ETH-USD",
+        crypto_id="ethereum",
+        period="1y",  # Use 1 year of data
+        epochs=50,    # Reduced epochs
+        batch_size=32
+    )
+    print(f"\nEthereum Training Results:")
+    print(f"  - Training Loss: {eth_metrics['train_loss']:.6f}")
+    print(f"  - Validation Loss: {eth_metrics['val_loss']:.6f}")
+    print(f"  - Training MAE: {eth_metrics['train_mae']:.6f}")
+    print(f"  - Validation MAE: {eth_metrics['val_mae']:.6f}")
+    print(f"  - Epochs Trained: {eth_metrics['epochs_trained']}")
+    
+    # Train on Bitcoin (BTC-USD)
+    print("\n[2/2] Training model for Bitcoin (BTC-USD)...")
+    btc_metrics = train_model_with_yfinance(
+        symbol="BTC-USD",
+        crypto_id="bitcoin",
+        period="1y",  # Use 1 year of data
+        epochs=50,    # Reduced epochs
+        batch_size=32
+    )
+    print(f"\nBitcoin Training Results:")
+    print(f"  - Training Loss: {btc_metrics['train_loss']:.6f}")
+    print(f"  - Validation Loss: {btc_metrics['val_loss']:.6f}")
+    print(f"  - Training MAE: {btc_metrics['train_mae']:.6f}")
+    print(f"  - Validation MAE: {btc_metrics['val_mae']:.6f}")
+    print(f"  - Epochs Trained: {btc_metrics['epochs_trained']}")
+    
+    print("\n" + "=" * 60)
+    print("Training Complete! Models saved to app/ml/models/")
+    print("=" * 60)
