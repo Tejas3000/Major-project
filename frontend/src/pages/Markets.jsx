@@ -1,19 +1,18 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiTrendingUp, FiTrendingDown, FiPercent, FiActivity } from 'react-icons/fi';
+import { FiTrendingUp, FiTrendingDown, FiPercent, FiActivity, FiRefreshCw } from 'react-icons/fi';
 import { marketApi, interestRateApi, poolApi } from '../services/api';
 
 const supportedAssets = [
     { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', icon: '⟠', color: 'from-blue-500 to-indigo-600' },
     { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', icon: '₿', color: 'from-orange-500 to-amber-600' },
-    { id: 'matic-network', symbol: 'MATIC', name: 'Polygon', icon: '⬡', color: 'from-purple-500 to-violet-600' },
-    { id: 'chainlink', symbol: 'LINK', name: 'Chainlink', icon: '⬡', color: 'from-blue-400 to-blue-600' },
-    { id: 'uniswap', symbol: 'UNI', name: 'Uniswap', icon: '🦄', color: 'from-pink-500 to-rose-600' },
 ];
 
 export default function Markets() {
     const [markets, setMarkets] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState(null);
     const [sortBy, setSortBy] = useState('market_cap');
     const [sortOrder, setSortOrder] = useState('desc');
 
@@ -24,7 +23,7 @@ export default function Markets() {
     }, []);
 
     const fetchMarkets = async () => {
-        setLoading(true);
+        if (!loading) setRefreshing(true);
         try {
             const marketData = await Promise.all(
                 supportedAssets.map(async (asset) => {
@@ -36,35 +35,50 @@ export default function Markets() {
                         ]);
                         return {
                             ...asset,
-                            ...market,
+                            current_price: market.current_price,
+                            price_change_24h: market.price_change_24h,
+                            price_change_7d: market.price_change_7d,
+                            market_cap: market.market_cap,
+                            volume_24h: market.volume_24h,
+                            high_24h: market.high_24h,
+                            low_24h: market.low_24h,
                             supply_apy: pool.supply_apy || rate.apy * 0.9,
                             borrow_apy: rate.apy,
                             utilization: pool.utilization_rate,
                             total_supplied: pool.total_supplied,
                             total_borrowed: pool.total_borrowed,
+                            source: market.source,
                         };
                     } catch (e) {
+                        console.error(`Error fetching data for ${asset.id}:`, e);
                         return {
                             ...asset,
-                            current_price: Math.random() * 3000 + 100,
-                            price_change_24h: (Math.random() - 0.5) * 10,
-                            market_cap: Math.random() * 100000000000,
-                            volume_24h: Math.random() * 5000000000,
-                            supply_apy: Math.random() * 0.1,
-                            borrow_apy: Math.random() * 0.15,
-                            utilization: Math.random() * 0.8,
-                            total_supplied: Math.random() * 50000,
-                            total_borrowed: Math.random() * 30000,
+                            current_price: null,
+                            price_change_24h: null,
+                            market_cap: null,
+                            volume_24h: null,
+                            supply_apy: null,
+                            borrow_apy: null,
+                            utilization: null,
+                            total_supplied: null,
+                            total_borrowed: null,
+                            error: true,
                         };
                     }
                 })
             );
             setMarkets(marketData);
+            setLastUpdated(new Date());
         } catch (error) {
             console.error('Error fetching markets:', error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const handleRefresh = () => {
+        fetchMarkets();
     };
 
     const sortedMarkets = [...markets].sort((a, b) => {
@@ -111,9 +125,21 @@ export default function Markets() {
     return (
         <div className="space-y-8">
             {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold text-white">Markets</h1>
-                <p className="text-gray-400 mt-1">Overview of all lending markets and rates</p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-white">Markets</h1>
+                    <p className="text-gray-400 mt-1">
+                        Live prices from yfinance • {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : 'Loading...'}
+                    </p>
+                </div>
+                <button
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    className="flex items-center space-x-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 rounded-lg transition-colors"
+                >
+                    <FiRefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                    <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+                </button>
             </div>
 
             {/* Stats Summary */}
@@ -121,25 +147,25 @@ export default function Markets() {
                 <div className="stat-card">
                     <p className="text-sm text-gray-400">Total Market Size</p>
                     <p className="text-2xl font-bold text-white mt-1">
-                        ${(markets.reduce((acc, m) => acc + (m.total_supplied || 0), 0) * 2250).toLocaleString()}
+                        ${markets.reduce((acc, m) => acc + ((m.total_supplied || 0) * (m.current_price || 0)), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </p>
                 </div>
                 <div className="stat-card">
                     <p className="text-sm text-gray-400">Total Borrowed</p>
                     <p className="text-2xl font-bold text-white mt-1">
-                        ${(markets.reduce((acc, m) => acc + (m.total_borrowed || 0), 0) * 2250).toLocaleString()}
+                        ${markets.reduce((acc, m) => acc + ((m.total_borrowed || 0) * (m.current_price || 0)), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </p>
                 </div>
                 <div className="stat-card">
                     <p className="text-sm text-gray-400">Avg Supply APY</p>
                     <p className="text-2xl font-bold text-accent-green mt-1">
-                        {(markets.reduce((acc, m) => acc + (m.supply_apy || 0), 0) / markets.length * 100).toFixed(2)}%
+                        {markets.length > 0 ? (markets.reduce((acc, m) => acc + (m.supply_apy || 0), 0) / markets.length * 100).toFixed(2) : '0.00'}%
                     </p>
                 </div>
                 <div className="stat-card">
                     <p className="text-sm text-gray-400">Avg Borrow APY</p>
                     <p className="text-2xl font-bold text-primary-400 mt-1">
-                        {(markets.reduce((acc, m) => acc + (m.borrow_apy || 0), 0) / markets.length * 100).toFixed(2)}%
+                        {markets.length > 0 ? (markets.reduce((acc, m) => acc + (m.borrow_apy || 0), 0) / markets.length * 100).toFixed(2) : '0.00'}%
                     </p>
                 </div>
             </div>
@@ -184,7 +210,7 @@ export default function Markets() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.05 }}
-                                    className="border-b border-gray-800/50 hover:bg-dark-300/50 transition-colors"
+                                    className={`border-b border-gray-800/50 hover:bg-dark-300/50 transition-colors ${market.error ? 'opacity-50' : ''}`}
                                 >
                                     <td className="py-4 px-4">
                                         <div className="flex items-center space-x-3">
@@ -198,48 +224,76 @@ export default function Markets() {
                                         </div>
                                     </td>
                                     <td className="py-4 px-4 text-right">
-                                        <p className="font-mono text-white">
-                                            ${market.current_price?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </p>
+                                        {market.current_price != null ? (
+                                            <p className="font-mono text-white">
+                                                ${market.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </p>
+                                        ) : (
+                                            <p className="text-gray-500">--</p>
+                                        )}
                                     </td>
                                     <td className="py-4 px-4 text-right">
-                                        <div className={`flex items-center justify-end ${(market.price_change_24h || 0) >= 0 ? 'text-accent-green' : 'text-accent-red'
-                                            }`}>
-                                            {(market.price_change_24h || 0) >= 0 ? (
-                                                <FiTrendingUp className="w-4 h-4 mr-1" />
-                                            ) : (
-                                                <FiTrendingDown className="w-4 h-4 mr-1" />
-                                            )}
-                                            <span>{Math.abs(market.price_change_24h || 0).toFixed(2)}%</span>
-                                        </div>
-                                    </td>
-                                    <td className="py-4 px-4 text-right">
-                                        <span className="text-accent-green font-medium">
-                                            {((market.supply_apy || 0) * 100).toFixed(2)}%
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-4 text-right">
-                                        <span className="text-primary-400 font-medium">
-                                            {((market.borrow_apy || 0) * 100).toFixed(2)}%
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-4 text-right">
-                                        <div className="flex items-center justify-end space-x-2">
-                                            <div className="w-16 h-2 bg-dark-400 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-accent-purple transition-all duration-500"
-                                                    style={{ width: `${(market.utilization || 0) * 100}%` }}
-                                                />
+                                        {market.price_change_24h != null ? (
+                                            <div className={`flex items-center justify-end ${market.price_change_24h >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                                                {market.price_change_24h >= 0 ? (
+                                                    <FiTrendingUp className="w-4 h-4 mr-1" />
+                                                ) : (
+                                                    <FiTrendingDown className="w-4 h-4 mr-1" />
+                                                )}
+                                                <span>{Math.abs(market.price_change_24h).toFixed(2)}%</span>
                                             </div>
-                                            <span className="text-gray-400 text-sm">
-                                                {((market.utilization || 0) * 100).toFixed(0)}%
-                                            </span>
-                                        </div>
+                                        ) : (
+                                            <p className="text-gray-500">--</p>
+                                        )}
                                     </td>
                                     <td className="py-4 px-4 text-right">
-                                        <p className="text-white font-medium">
-                                            {(market.total_supplied || 0).toLocaleString()} {market.symbol}
-                                        </p>
+                                        {market.supply_apy != null ? (
+                                            <span className="text-accent-green font-medium">
+                                                {(market.supply_apy * 100).toFixed(2)}%
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-500">--</span>
+                                        )}
+                                    </td>
+                                    <td className="py-4 px-4 text-right">
+                                        {market.borrow_apy != null ? (
+                                            <span className="text-primary-400 font-medium">
+                                                {(market.borrow_apy * 100).toFixed(2)}%
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-500">--</span>
+                                        )}
+                                    </td>
+                                    <td className="py-4 px-4 text-right">
+                                        {market.utilization != null ? (
+                                            <div className="flex items-center justify-end space-x-2">
+                                                <div className="w-16 h-2 bg-dark-400 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-accent-purple transition-all duration-500"
+                                                        style={{ width: `${market.utilization * 100}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-gray-400 text-sm">
+                                                    {(market.utilization * 100).toFixed(0)}%
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-500">--</span>
+                                        )}
+                                    </td>
+                                    <td className="py-4 px-4 text-right">
+                                        {market.total_supplied != null ? (
+                                            <div>
+                                                <p className="text-white font-medium">
+                                                    {market.total_supplied.toLocaleString(undefined, { maximumFractionDigits: 2 })} {market.symbol}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    ${(market.total_supplied * (market.current_price || 0)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-500">--</span>
+                                        )}
                                     </td>
                                 </motion.tr>
                             ))}

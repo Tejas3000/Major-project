@@ -65,7 +65,8 @@ export default function Portfolio() {
         const icons = {
             ethereum: '⟠',
             bitcoin: '₿',
-            'matic-network': '⬡',
+            chainlink: '⬡',
+            uniswap: '🦄',
         };
         return icons[asset] || '○';
     };
@@ -176,12 +177,12 @@ export default function Portfolio() {
                     </div>
                     <div className="flex items-center space-x-2">
                         <p className={`text-2xl font-bold ${status.color === 'green' ? 'text-accent-green' :
-                                status.color === 'red' ? 'text-accent-red' : 'text-amber-400'
+                            status.color === 'red' ? 'text-accent-red' : 'text-amber-400'
                             }`}>
                             {healthFactor?.health_factor?.toFixed(2) || '∞'}
                         </p>
                         <span className={`px-2 py-1 text-xs rounded-lg ${status.color === 'green' ? 'bg-accent-green/20 text-accent-green' :
-                                status.color === 'red' ? 'bg-accent-red/20 text-accent-red' : 'bg-amber-400/20 text-amber-400'
+                            status.color === 'red' ? 'bg-accent-red/20 text-accent-red' : 'bg-amber-400/20 text-amber-400'
                             }`}>
                             {status.label}
                         </span>
@@ -308,7 +309,7 @@ export default function Portfolio() {
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-gray-400">Health Factor Progress</span>
                         <span className={`font-medium ${status.color === 'green' ? 'text-accent-green' :
-                                status.color === 'red' ? 'text-accent-red' : 'text-amber-400'
+                            status.color === 'red' ? 'text-accent-red' : 'text-amber-400'
                             }`}>
                             {healthFactor?.health_factor?.toFixed(2) || '∞'}
                         </span>
@@ -316,7 +317,7 @@ export default function Portfolio() {
                     <div className="h-4 bg-dark-300 rounded-full overflow-hidden">
                         <div
                             className={`h-full transition-all duration-500 ${status.color === 'green' ? 'bg-accent-green' :
-                                    status.color === 'red' ? 'bg-accent-red' : 'bg-amber-400'
+                                status.color === 'red' ? 'bg-accent-red' : 'bg-amber-400'
                                 }`}
                             style={{ width: `${Math.min(100, ((healthFactor?.health_factor || 0) / 3) * 100)}%` }}
                         />

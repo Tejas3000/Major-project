@@ -292,7 +292,6 @@ async def get_supported_assets():
         "assets": [
             {"id": "ethereum", "symbol": "ETH", "name": "Ethereum"},
             {"id": "bitcoin", "symbol": "BTC", "name": "Bitcoin"},
-            {"id": "matic-network", "symbol": "MATIC", "name": "Polygon"},
             {"id": "chainlink", "symbol": "LINK", "name": "Chainlink"},
             {"id": "uniswap", "symbol": "UNI", "name": "Uniswap"},
         ]

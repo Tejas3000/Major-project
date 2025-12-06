@@ -92,19 +92,12 @@ export function WalletProvider({ children }) {
             if (error.code === 4902) {
                 // Add the network
                 const networks = {
-                    137: {
+                    1: {
                         chainId: chainIdHex,
-                        chainName: 'Polygon Mainnet',
-                        nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-                        rpcUrls: ['https://polygon-rpc.com'],
-                        blockExplorerUrls: ['https://polygonscan.com'],
-                    },
-                    80001: {
-                        chainId: chainIdHex,
-                        chainName: 'Polygon Mumbai Testnet',
-                        nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-                        rpcUrls: ['https://rpc-mumbai.maticvigil.com'],
-                        blockExplorerUrls: ['https://mumbai.polygonscan.com'],
+                        chainName: 'Ethereum Mainnet',
+                        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                        rpcUrls: ['https://mainnet.infura.io/v3/'],
+                        blockExplorerUrls: ['https://etherscan.io'],
                     },
                     11155111: {
                         chainId: chainIdHex,

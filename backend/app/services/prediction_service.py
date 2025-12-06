@@ -24,8 +24,6 @@ class PredictionService:
         "bitcoin": {"symbol": "BTC-USD", "model_id": "bitcoin"},
         "eth": {"symbol": "ETH-USD", "model_id": "ethereum"},
         "btc": {"symbol": "BTC-USD", "model_id": "bitcoin"},
-        "matic-network": {"symbol": "MATIC-USD", "model_id": "ethereum"},  # Use ETH model as fallback
-        "polygon": {"symbol": "MATIC-USD", "model_id": "ethereum"},
         "chainlink": {"symbol": "LINK-USD", "model_id": "ethereum"},
         "uniswap": {"symbol": "UNI-USD", "model_id": "ethereum"},
         "solana": {"symbol": "SOL-USD", "model_id": "ethereum"},

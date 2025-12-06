@@ -3,26 +3,58 @@ import { motion } from 'framer-motion';
 import { FiTrendingUp, FiInfo, FiCheck, FiAlertTriangle } from 'react-icons/fi';
 import { useWallet } from '../context/WalletContext';
 import { poolApi, interestRateApi, marketApi } from '../services/api';
+import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 
 const supportedAssets = [
     { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', icon: '⟠', color: 'from-blue-500 to-indigo-600' },
     { id: 'bitcoin', symbol: 'WBTC', name: 'Wrapped Bitcoin', icon: '₿', color: 'from-orange-500 to-amber-600' },
-    { id: 'matic-network', symbol: 'MATIC', name: 'Polygon', icon: '⬡', color: 'from-purple-500 to-violet-600' },
 ];
 
 export default function Lend() {
-    const { isConnected, account, signer } = useWallet();
+    const { isConnected, account, signer, provider } = useWallet();
     const [selectedAsset, setSelectedAsset] = useState(supportedAssets[0]);
     const [amount, setAmount] = useState('');
     const [loading, setLoading] = useState(false);
     const [poolStats, setPoolStats] = useState(null);
     const [interestRate, setInterestRate] = useState(null);
     const [userBalance, setUserBalance] = useState('0');
+    const [balanceLoading, setBalanceLoading] = useState(false);
 
     useEffect(() => {
         fetchPoolData();
     }, [selectedAsset]);
+
+    // Fetch wallet balance when account or selected asset changes
+    useEffect(() => {
+        if (isConnected && account && provider) {
+            fetchWalletBalance();
+        } else {
+            setUserBalance('0');
+        }
+    }, [isConnected, account, provider, selectedAsset]);
+
+    const fetchWalletBalance = async () => {
+        if (!provider || !account) return;
+
+        setBalanceLoading(true);
+        try {
+            if (selectedAsset.symbol === 'ETH') {
+                // Get native ETH balance
+                const balance = await provider.getBalance(account);
+                setUserBalance(ethers.formatEther(balance));
+            } else if (selectedAsset.symbol === 'WBTC') {
+                // For WBTC, we would need the token contract address
+                // For now, show 0 as we don't have actual WBTC contract
+                setUserBalance('0');
+            }
+        } catch (error) {
+            console.error('Error fetching wallet balance:', error);
+            setUserBalance('0');
+        } finally {
+            setBalanceLoading(false);
+        }
+    };
 
     const fetchPoolData = async () => {
         try {
@@ -57,6 +89,21 @@ export default function Lend() {
 
         if (!amount || parseFloat(amount) <= 0) {
             toast.error('Please enter a valid amount');
+            return;
+        }
+
+        // Check if user has enough balance
+        const amountToSupply = parseFloat(amount);
+        const availableBalance = parseFloat(userBalance);
+
+        if (amountToSupply > availableBalance) {
+            toast.error(`Insufficient balance. You have ${availableBalance.toFixed(6)} ${selectedAsset.symbol}`);
+            return;
+        }
+
+        // Leave some ETH for gas fees
+        if (selectedAsset.symbol === 'ETH' && amountToSupply > availableBalance - 0.01) {
+            toast.error('Please leave some ETH for gas fees');
             return;
         }
 
@@ -125,8 +172,8 @@ export default function Lend() {
                                     key={asset.id}
                                     onClick={() => setSelectedAsset(asset)}
                                     className={`p-4 rounded-xl border transition-all duration-200 ${selectedAsset.id === asset.id
-                                            ? 'border-primary-500 bg-primary-500/10'
-                                            : 'border-gray-700 hover:border-gray-600 bg-dark-300'
+                                        ? 'border-primary-500 bg-primary-500/10'
+                                        : 'border-gray-700 hover:border-gray-600 bg-dark-300'
                                         }`}
                                 >
                                     <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${asset.color} flex items-center justify-center text-xl mb-2`}>
@@ -148,21 +195,38 @@ export default function Lend() {
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
                                 placeholder="0.00"
-                                className="input-primary text-2xl font-mono pr-24"
+                                className={`input-primary text-2xl font-mono pr-24 ${amount && parseFloat(amount) > parseFloat(userBalance)
+                                        ? 'border-red-500 focus:border-red-500'
+                                        : ''
+                                    }`}
                             />
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-2">
                                 <span className="text-gray-400 font-semibold">{selectedAsset.symbol}</span>
                                 <button
-                                    onClick={() => setAmount(userBalance)}
+                                    onClick={() => {
+                                        // Leave some for gas if ETH
+                                        const maxAmount = selectedAsset.symbol === 'ETH'
+                                            ? Math.max(0, parseFloat(userBalance) - 0.01).toFixed(6)
+                                            : userBalance;
+                                        setAmount(maxAmount);
+                                    }}
                                     className="px-2 py-1 bg-primary-600/20 text-primary-400 text-xs rounded-lg hover:bg-primary-600/30"
                                 >
                                     MAX
                                 </button>
                             </div>
                         </div>
-                        <p className="text-sm text-gray-500 mt-2">
-                            Wallet Balance: {userBalance} {selectedAsset.symbol}
-                        </p>
+                        <div className="flex justify-between items-center mt-2">
+                            <p className="text-sm text-gray-500">
+                                Wallet Balance: {balanceLoading ? 'Loading...' : `${parseFloat(userBalance).toFixed(6)} ${selectedAsset.symbol}`}
+                            </p>
+                            {amount && parseFloat(amount) > parseFloat(userBalance) && (
+                                <p className="text-sm text-red-500 flex items-center">
+                                    <FiAlertTriangle className="w-4 h-4 mr-1" />
+                                    Insufficient balance
+                                </p>
+                            )}
+                        </div>
                     </div>
 
                     {/* Earnings Preview */}

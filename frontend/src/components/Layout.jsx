@@ -13,7 +13,7 @@ const navItems = [
     { path: '/borrow', label: 'Borrow', icon: FiDollarSign },
     { path: '/portfolio', label: 'Portfolio', icon: FiPieChart },
     { path: '/markets', label: 'Markets', icon: FiBarChart2 },
-    { path: '/predictions', label: 'AI Predictions', icon: FiCpu },
+    { path: '/predictions', label: 'Model Predictions', icon: FiCpu }
 ];
 
 export default function Layout({ children }) {

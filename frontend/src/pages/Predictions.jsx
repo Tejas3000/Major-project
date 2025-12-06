@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 const supportedAssets = [
     { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', icon: '⟠' },
     { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', icon: '₿' },
-    { id: 'matic-network', symbol: 'MATIC', name: 'Polygon', icon: '⬡' },
 ];
 
 export default function Predictions() {
@@ -175,7 +174,7 @@ export default function Predictions() {
                 <div>
                     <h1 className="text-3xl font-bold text-white flex items-center">
                         <FiCpu className="w-8 h-8 mr-3 text-accent-green" />
-                        AI Price Predictions
+                        Model Price Predictions
                     </h1>
                     <p className="text-gray-400 mt-1">LSTM-powered cryptocurrency price forecasting</p>
                 </div>
@@ -198,8 +197,8 @@ export default function Predictions() {
                         key={asset.id}
                         onClick={() => setSelectedAsset(asset)}
                         className={`px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-200 ${selectedAsset.id === asset.id
-                                ? 'bg-primary-600 text-white'
-                                : 'bg-dark-200 text-gray-400 hover:text-white hover:bg-dark-100'
+                            ? 'bg-primary-600 text-white'
+                            : 'bg-dark-200 text-gray-400 hover:text-white hover:bg-dark-100'
                             }`}
                     >
                         <span className="text-xl">{asset.icon}</span>
@@ -221,8 +220,8 @@ export default function Predictions() {
                             <p className="text-sm text-gray-400">Shaded area represents prediction confidence interval</p>
                         </div>
                         <div className={`px-4 py-2 rounded-xl ${prediction?.trend === 'bullish'
-                                ? 'bg-accent-green/20 text-accent-green'
-                                : 'bg-accent-red/20 text-accent-red'
+                            ? 'bg-accent-green/20 text-accent-green'
+                            : 'bg-accent-red/20 text-accent-red'
                             }`}>
                             {prediction?.trend === 'bullish' ? (
                                 <FiTrendingUp className="w-5 h-5 inline mr-2" />

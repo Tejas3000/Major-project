@@ -27,8 +27,6 @@ class MarketDataService:
         # Cryptocurrencies
         "ethereum": "ETH-USD",
         "bitcoin": "BTC-USD",
-        "matic-network": "MATIC-USD",
-        "polygon": "MATIC-USD",
         "chainlink": "LINK-USD",
         "uniswap": "UNI-USD",
         "solana": "SOL-USD",
@@ -344,8 +342,6 @@ class MarketDataService:
         mock_prices = {
             "ethereum": 2250.50,
             "bitcoin": 43500.00,
-            "matic-network": 0.85,
-            "polygon": 0.85,
             "chainlink": 14.20,
             "uniswap": 6.50,
             "solana": 120.00,
@@ -381,8 +377,6 @@ class MarketDataService:
         base_prices = {
             "ethereum": 2250.50,
             "bitcoin": 43500.00,
-            "matic-network": 0.85,
-            "polygon": 0.85,
             "chainlink": 14.20,
             "uniswap": 6.50,
             "solana": 120.00,
