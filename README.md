@@ -6,7 +6,7 @@ A decentralized finance (DeFi) lending platform that uses LSTM-based machine lea
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         Frontend (React)                         │
+│                         Frontend (React)                        │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │  MetaMask   │  │  Dashboard  │  │  Lending/Borrowing UI   │  │
 │  │ Integration │  │   Charts    │  │   Interest Rate Display │  │
@@ -15,7 +15,7 @@ A decentralized finance (DeFi) lending platform that uses LSTM-based machine lea
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Backend (FastAPI)                           │
+│                      Backend (FastAPI)                          │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │ LSTM Price  │  │  Interest   │  │   Market Data           │  │
 │  │ Prediction  │  │  Rate Calc  │  │   Aggregation           │  │
@@ -24,7 +24,7 @@ A decentralized finance (DeFi) lending platform that uses LSTM-based machine lea
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                   Smart Contracts (Solidity)                     │
+│                   Smart Contracts (Solidity)                    │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │   Lending   │  │  Borrowing  │  │   Interest Rate Oracle  │  │
 │  │    Pool     │  │   Manager   │  │       Contract          │  │
@@ -35,7 +35,7 @@ A decentralized finance (DeFi) lending platform that uses LSTM-based machine lea
 ## 🚀 Features
 
 - **MetaMask Integration**: Seamless wallet connection and transaction signing
-- **ML-Powered Interest Rates**: LSTM model predicts market trends to calculate optimal interest rates
+- **ML-Powered Interest Rates**: LSTM model predicts market trends to calculate optimal collateral rates
 - **Real-time Dashboard**: Interactive charts and analytics
 - **Variable Interest Rates**: Dynamic rates based on:
   - Market volatility
@@ -50,8 +50,7 @@ A decentralized finance (DeFi) lending platform that uses LSTM-based machine lea
 │   ├── app/
 │   │   ├── api/            # API routes
 │   │   ├── ml/             # LSTM model for price prediction
-│   │   ├── services/       # Business logic
-│   │   └── utils/          # Helper functions
+│   │   └── services/       # Business logic
 │   ├── requirements.txt
 │   └── main.py
 │
@@ -60,9 +59,11 @@ A decentralized finance (DeFi) lending platform that uses LSTM-based machine lea
 │   │   ├── components/     # React components
 │   │   ├── hooks/          # Custom hooks (MetaMask, etc.)
 │   │   ├── pages/          # Page components
-│   │   ├── services/       # API services
-│   │   └── utils/          # Helper functions
-│   └── package.json
+│   │   └── services/       # API services
+│   ├── package.json
+|   ├── main.jsx
+|   ├── App.jsx
+|   └── index.css
 │
 ├── contracts/              # Solidity smart contracts
 │   ├── LendingPool.sol
@@ -77,7 +78,7 @@ A decentralized finance (DeFi) lending platform that uses LSTM-based machine lea
 - **Frontend**: React, ethers.js, Chart.js, TailwindCSS
 - **Backend**: Python, FastAPI, TensorFlow/Keras (LSTM)
 - **Blockchain**: Solidity, Hardhat, Ethereum/Polygon
-- **Data**: CoinGecko API, Web3 providers
+- **Data**: CoinGecko API, Web3 providers, Yahoo Finance library (yfinance)
 
 ## 🚦 Getting Started
 
@@ -185,7 +186,7 @@ Where:
 ### LSTM Model Architecture
 
 ```
-Input (60 days) → LSTM(128) → Dropout(0.2) → LSTM(64) → Dropout(0.2) → LSTM(32) → Dense(1) → Output
+Input (60 days) → LSTM(128) → Dropout(0.2) → LSTM(64) → Dropout(0.2) → Dense(32) → Dense(16) → Output
 ```
 
 The model is trained on historical price data and predicts:
@@ -193,47 +194,12 @@ The model is trained on historical price data and predicts:
 - Market volatility
 - Trend direction (bullish/bearish/neutral)
 
-## 🔐 Security Considerations
+### Contributors
 
-- All smart contracts follow OpenZeppelin standards
-- Oracle manipulation prevention through staleness checks
-- Flash loan attack prevention via health factor checks
-- Liquidation mechanism protects lenders
-- Rate limits on API endpoints
-- CORS protection enabled
+ - [Tejas M Prasad](https://github.com/tejas3000)
 
-## 🌐 Supported Networks
+ - [Sankalp Vijendra Rotti](https://github.com/RottiSankalp86) 
 
-| Network | Chain ID | Status |
-|---------|----------|--------|
-| Ethereum Mainnet | 1 | Ready |
-| Sepolia Testnet | 11155111 | Ready |
-| Polygon Mainnet | 137 | Ready |
-| Mumbai Testnet | 80001 | Ready |
-| Hardhat Local | 31337 | Ready |
+ - [Porkavi](https://github.com/P00rkavi/P00rkavi)
 
-## 📱 API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/health` | GET | Health check |
-| `/api/v1/predictions/{asset}` | GET | Get price predictions |
-| `/api/v1/interest-rates/{asset}` | GET | Get current interest rate |
-| `/api/v1/market/{asset}` | GET | Get market data |
-| `/api/v1/pools/{asset}` | GET | Get pool statistics |
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-MIT License - see the [LICENSE](LICENSE) file for details.
-
-## ⚠️ Disclaimer
-
-This is a educational project. Do not use in production without proper security audits. The ML predictions are for demonstration purposes and should not be used for financial decisions.
+ - [Tharun Teja Kethineni](https://github.com/tharuntejak)
