@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 const supportedAssets = [
     { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', icon: '⟠', color: 'from-blue-500 to-indigo-600' },
     { id: 'bitcoin', symbol: 'WBTC', name: 'Wrapped Bitcoin', icon: '₿', color: 'from-orange-500 to-amber-600' },
+    { id: 'usdt', symbol: 'USDT', name: 'Tether USD', icon: '₮', color: 'from-green-500 to-emerald-600', isStablecoin: true },
 ];
 
 export default function Lend() {
@@ -43,9 +44,11 @@ export default function Lend() {
                 // Get native ETH balance
                 const balance = await provider.getBalance(account);
                 setUserBalance(ethers.formatEther(balance));
-            } else if (selectedAsset.symbol === 'WBTC') {
-                // For WBTC, we would need the token contract address
-                // For now, show 0 as we don't have actual WBTC contract
+            } else if (selectedAsset.symbol === 'WBTC' || selectedAsset.symbol === 'USDT') {
+                // For ERC20 tokens, we would need the token contract address
+                // For now, show 0 as we don't have actual token contracts
+                setUserBalance('0');
+            } else {
                 setUserBalance('0');
             }
         } catch (error) {
@@ -58,6 +61,22 @@ export default function Lend() {
 
     const fetchPoolData = async () => {
         try {
+            // For stablecoins, use fixed rates
+            if (selectedAsset.isStablecoin) {
+                setPoolStats({
+                    total_supplied: 50000,
+                    total_borrowed: 35000,
+                    utilization_rate: 0.70,
+                    available_liquidity: 15000,
+                    supply_apy: 0.038,
+                });
+                setInterestRate({
+                    effective_rate: 0.045,
+                    apy: 0.046,
+                });
+                return;
+            }
+
             const [stats, rate] = await Promise.all([
                 poolApi.getPoolStats(selectedAsset.id),
                 interestRateApi.getInterestRate(selectedAsset.id),
@@ -133,14 +152,24 @@ export default function Lend() {
     };
 
     const calculateEarnings = () => {
-        if (!amount || !interestRate) return { daily: 0, monthly: 0, yearly: 0 };
         const principal = parseFloat(amount);
-        const apy = poolStats?.supply_apy || interestRate.apy * 0.9;
+        if (!amount || isNaN(principal) || principal <= 0 || !interestRate) {
+            return { daily: '0.000000', monthly: '0.0000', yearly: '0.0000' };
+        }
+        const apy = poolStats?.supply_apy || interestRate.apy * 0.9 || 0;
+
+        if (isNaN(apy) || apy <= 0) {
+            return { daily: '0.000000', monthly: '0.0000', yearly: '0.0000' };
+        }
+
+        const daily = principal * apy / 365;
+        const monthly = principal * apy / 12;
+        const yearly = principal * apy;
 
         return {
-            daily: (principal * apy / 365).toFixed(6),
-            monthly: (principal * apy / 12).toFixed(4),
-            yearly: (principal * apy).toFixed(4),
+            daily: isNaN(daily) ? '0.000000' : daily.toFixed(6),
+            monthly: isNaN(monthly) ? '0.0000' : monthly.toFixed(4),
+            yearly: isNaN(yearly) ? '0.0000' : yearly.toFixed(4),
         };
     };
 
@@ -196,8 +225,8 @@ export default function Lend() {
                                 onChange={(e) => setAmount(e.target.value)}
                                 placeholder="0.00"
                                 className={`input-primary text-2xl font-mono pr-24 ${amount && parseFloat(amount) > parseFloat(userBalance)
-                                        ? 'border-red-500 focus:border-red-500'
-                                        : ''
+                                    ? 'border-red-500 focus:border-red-500'
+                                    : ''
                                     }`}
                             />
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-2">
@@ -230,7 +259,7 @@ export default function Lend() {
                     </div>
 
                     {/* Earnings Preview */}
-                    {amount && parseFloat(amount) > 0 && (
+                    {amount && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0 && (
                         <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
