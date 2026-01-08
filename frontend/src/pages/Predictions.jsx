@@ -327,7 +327,7 @@ export default function Predictions() {
                         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
                                 <p className="text-xs text-gray-500">Architecture</p>
-                                <p className="font-medium text-white">Bi-LSTM</p>
+                                <p className="font-medium text-white">LSTM</p>
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500">Lookback Period</p>
