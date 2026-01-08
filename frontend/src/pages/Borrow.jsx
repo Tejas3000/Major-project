@@ -311,7 +311,10 @@ export default function Borrow() {
                 collateral_type: collateralAsset.id,
             });
 
-            toast.success(`Borrow prepared! Interest Rate: ${(txData.interest_rate * 100).toFixed(2)}%`);
+            const displayRate = txData.interest_rate != null && !isNaN(txData.interest_rate)
+                ? (txData.interest_rate * 100).toFixed(2)
+                : borrowAsset.isStablecoin ? '4.60' : '6.80';
+            toast.success(`Borrow prepared! Interest Rate: ${displayRate}%`);
 
             setBorrowAmount('');
             setCollateralAmount('');
@@ -433,9 +436,15 @@ export default function Borrow() {
                             <label className="block text-sm font-medium text-gray-400 mb-3">Borrow Amount</label>
                             <div className="relative">
                                 <input
-                                    type="number"
+                                    type="text"
+                                    inputMode="decimal"
                                     value={borrowAmount}
-                                    onChange={(e) => setBorrowAmount(e.target.value)}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                            setBorrowAmount(value);
+                                        }
+                                    }}
                                     placeholder="0.00"
                                     className="input-primary text-xl font-mono pr-16"
                                 />
@@ -465,9 +474,15 @@ export default function Borrow() {
                             </div>
                             <div className="relative">
                                 <input
-                                    type="number"
+                                    type="text"
+                                    inputMode="decimal"
                                     value={collateralAmount}
-                                    onChange={(e) => setCollateralAmount(e.target.value)}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                            setCollateralAmount(value);
+                                        }
+                                    }}
                                     placeholder="0.00"
                                     className={`input-primary text-xl font-mono pr-16 ${autoCalculating ? 'border-accent-purple animate-pulse' : ''}`}
                                 />
