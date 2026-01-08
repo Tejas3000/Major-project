@@ -278,17 +278,47 @@ class LSTMPricePredictor:
         # Save model and scalers
         self.save_model(crypto_id)
         
-        # Calculate metrics
+        # Build epoch-by-epoch metrics dictionary
+        epoch_metrics = {}
+        num_epochs = len(history.history['loss'])
+        for epoch in range(num_epochs):
+            epoch_metrics[epoch + 1] = {
+                'loss': float(history.history['loss'][epoch]),
+                'mae': float(history.history['mae'][epoch]),
+                'mse': float(history.history['mse'][epoch]),
+                'val_loss': float(history.history['val_loss'][epoch]),
+                'val_mae': float(history.history['val_mae'][epoch]),
+                'val_mse': float(history.history['val_mse'][epoch]),
+            }
+        
+        # Print epoch metrics summary
+        print("\n" + "="*80)
+        print(f"TRAINING RESULTS FOR {crypto_id.upper()}")
+        print("="*80)
+        print(f"{'Epoch':<8} {'Loss':<12} {'MAE':<12} {'MSE':<12} {'Val Loss':<12} {'Val MAE':<12} {'Val MSE':<12}")
+        print("-"*80)
+        for epoch, metrics_data in epoch_metrics.items():
+            print(f"{epoch:<8} {metrics_data['loss']:<12.6f} {metrics_data['mae']:<12.6f} {metrics_data['mse']:<12.6f} "
+                  f"{metrics_data['val_loss']:<12.6f} {metrics_data['val_mae']:<12.6f} {metrics_data['val_mse']:<12.6f}")
+        print("="*80)
+        print(f"Best Epoch: {np.argmin(history.history['val_loss']) + 1}")
+        print(f"Best Val Loss: {min(history.history['val_loss']):.6f}")
+        print("="*80 + "\n")
+        
+        # Calculate final metrics
         train_loss = history.history['loss'][-1]
         val_loss = history.history['val_loss'][-1]
-        
+
         metrics = {
             'train_loss': float(train_loss),
             'val_loss': float(val_loss),
             'train_mae': float(history.history['mae'][-1]),
             'val_mae': float(history.history['val_mae'][-1]),
             'epochs_trained': len(history.history['loss']),
-            'trained_at': datetime.now().isoformat()
+            'trained_at': datetime.now().isoformat(),
+            'epoch_history': epoch_metrics,
+            'best_epoch': int(np.argmin(history.history['val_loss']) + 1),
+            'best_val_loss': float(min(history.history['val_loss'])),
         }
         
         logger.info(f"Training completed. Metrics: {metrics}")
